@@ -10,7 +10,7 @@ class GroupMapping < ApplicationRecord
   scope :enabled,  -> { where(enabled: true) }
   scope :ordered,  -> { order(priority: :asc) }
 
-  # Returns the highest-priority matching mapping for a set of group identifiers.
+  # Returns all matching mappings ordered by priority (lowest number first).
   # Groups only act when an explicit mapping exists — no implicit name-to-role matching.
   def self.resolve_for(provider:, group_ids:)
     return [] if group_ids.blank?

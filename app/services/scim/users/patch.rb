@@ -7,7 +7,8 @@ module Scim
     # rejected. Deactivation is the only destructive operation and is soft.
     class Patch
       # Attributes SCIM is permitted to write.
-      MUTABLE_ATTRS = %w[displayName active emails userName].freeze
+      MUTABLE_ATTRS = %w[displayName active emails userName externalId].freeze
+      IMMUTABLE_ATTRS = %w[id schemas meta break_glass_admin role].freeze
 
       def initialize(provider:, id:, payload:, request:, base_url:)
         @provider = provider
@@ -83,6 +84,8 @@ module Scim
         end
 
         def apply_single(user, ei, attr, value)
+          return guard_immutable!(attr) unless MUTABLE_ATTRS.include?(attr)
+
           case attr
           when "active"
             set_active(user, ei, value)
@@ -97,7 +100,7 @@ module Scim
           when "externalId"
             ei.update!(scim_external_id: value.to_s)
           else
-            guard_immutable!(attr)
+            nil
           end
         end
 
@@ -130,8 +133,7 @@ module Scim
         end
 
         def guard_immutable!(attr)
-          immutable = %w[id externalId schemas meta break_glass_admin role]
-          if immutable.include?(attr)
+          if IMMUTABLE_ATTRS.include?(attr)
             raise Scim::Errors::MutabilityError, "#{attr} is immutable via SCIM"
           end
           # Unknown attributes are silently ignored per RFC 7644 §3.5.2.

@@ -26,7 +26,10 @@ class Admin::IdentityProvidersController < Admin::BaseController
   def edit; end
 
   def update
-    if @provider.update(provider_params)
+    attrs = provider_params
+    attrs.delete(:encrypted_client_secret) if attrs[:encrypted_client_secret].blank?
+
+    if @provider.update(attrs)
       redirect_to admin_identity_provider_path(@provider), notice: "Identity provider updated."
     else
       render :edit, status: :unprocessable_entity

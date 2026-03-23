@@ -18,6 +18,8 @@
         The sign-in request could not be verified. This can happen if you used the back button or opened the link in a new tab. Please try again.
       <% when "token_expired" %>
         The sign-in token has expired. Please try again.
+      <% when "token_invalid" %>
+        The sign-in token could not be verified. Please try again.
       <% when "no_provider_configured" %>
         Enterprise login is not configured on this instance.
       <% else %>

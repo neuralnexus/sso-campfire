@@ -34,7 +34,18 @@ class ExternalIdentity < ApplicationRecord
     # provider_subject is a stable security identifier (issuer+sub pair).
     # Changing it after link would silently transfer identity ownership.
     def subject_immutable
-      if provider_subject_changed?
+      return unless provider_subject_changed?
+
+      # SCIM-provisioned identities may be created before the user has completed
+      # an OIDC login. Allow a one-time transition from the SCIM placeholder
+      # subject (scim_resource_id) to the first verified OIDC subject.
+      old_subject, _new_subject = provider_subject_change_to_be_saved
+      allow_scim_bootstrap_transition =
+        scim_resource_id.present? &&
+        old_subject == scim_resource_id &&
+        last_authenticated_at.blank?
+
+      unless allow_scim_bootstrap_transition
         errors.add(:provider_subject, "cannot be changed after initial link")
       end
     end

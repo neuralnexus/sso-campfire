@@ -93,10 +93,9 @@ module Identity
         end
 
         uri  = URI.parse(token_endpoint)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
+        http = build_http_client(uri)
 
-        req = Net::HTTP::Post.new(uri.path)
+        req = Net::HTTP::Post.new(uri.request_uri)
         req.set_form_data(body)
         req["Accept"] = "application/json"
 
@@ -108,13 +107,28 @@ module Identity
         end
 
         parsed
+      rescue JSON::ParserError,
+             Net::OpenTimeout,
+             Net::ReadTimeout,
+             SocketError,
+             Errno::ECONNRESET,
+             Errno::ECONNREFUSED,
+             EOFError => e
+        raise Errors::TokenExchangeFailed, "Token exchange failed: #{e.message}"
       end
 
       def verify_id_token!(raw_token)
         # Fetch JWKS from provider and decode with signature verification.
         jwks_uri  = cached_endpoint!(:jwks_uri)
-        jwks_body = Net::HTTP.get(URI.parse(jwks_uri))
-        jwks      = JWT::JWK::Set.new(JSON.parse(jwks_body))
+        jwks_body = Rails.cache.fetch("oidc:jwks:#{@provider.id}:#{jwks_uri}", expires_in: 6.hours) do
+          uri = URI.parse(jwks_uri)
+          response = build_http_client(uri).get(uri.request_uri)
+          unless response.is_a?(Net::HTTPSuccess)
+            raise Errors::DiscoveryFailed, "Could not fetch JWKS: HTTP #{response.code}"
+          end
+          response.body
+        end
+        jwks = JWT::JWK::Set.new(JSON.parse(jwks_body))
 
         # Decode verifies signature, expiry, and nbf automatically.
         payload, _header = JWT.decode(
@@ -131,8 +145,18 @@ module Identity
         )
 
         payload
+      rescue JWT::ExpiredSignature => e
+        raise Errors::TokenExpired, "id_token has expired: #{e.message}"
       rescue JWT::DecodeError => e
-        raise Errors::TokenExpired, "id_token verification failed: #{e.message}"
+        raise Errors::TokenInvalid, "id_token verification failed: #{e.message}"
+      rescue JSON::ParserError,
+             Net::OpenTimeout,
+             Net::ReadTimeout,
+             SocketError,
+             Errno::ECONNRESET,
+             Errno::ECONNREFUSED,
+             EOFError => e
+        raise Errors::DiscoveryFailed, "Could not fetch JWKS: #{e.message}"
       end
 
       def validate_nonce!(claims)
@@ -166,10 +190,9 @@ module Identity
         return id_token_claims unless access_token.present?
 
         uri  = URI.parse(@provider.userinfo_endpoint)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
+        http = build_http_client(uri)
 
-        req = Net::HTTP::Get.new(uri.path)
+        req = Net::HTTP::Get.new(uri.request_uri)
         req["Authorization"] = "Bearer #{access_token}"
         req["Accept"]        = "application/json"
 
@@ -178,9 +201,17 @@ module Identity
 
         # Merge userinfo under id_token — id_token wins on conflicts.
         userinfo.merge(id_token_claims)
-      rescue => e
+      rescue StandardError => e
         Rails.logger.warn("[OidcCallback] userinfo fetch failed: #{e.message}")
         id_token_claims
+      end
+
+      def build_http_client(uri)
+        Net::HTTP.new(uri.host, uri.port).tap do |http|
+          http.use_ssl = uri.scheme == "https"
+          http.open_timeout = 5
+          http.read_timeout = 5
+        end
       end
 
       def redirect_uri

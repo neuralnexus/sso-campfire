@@ -23,19 +23,13 @@ Rails.application.routes.draw do
       get  "Schemas",               to: "schemas#index"
       get  "ResourceTypes",         to: "resource_types#index"
 
-      resources "Users", controller: "users", only: %i[index show create destroy] do
-        member do
-          patch "/", action: :patch,   via: :patch
-          put   "/", action: :replace, via: :put
-        end
-      end
+      resources "Users", controller: "users", only: %i[index show create destroy]
+      patch "Users/:id", to: "users#patch"
+      put   "Users/:id", to: "users#replace"
 
-      resources "Groups", controller: "groups", only: %i[index show create] do
-        member do
-          patch "/", action: :patch,   via: :patch
-          put   "/", action: :replace, via: :put
-        end
-      end
+      resources "Groups", controller: "groups", only: %i[index show create]
+      patch "Groups/:id", to: "groups#patch"
+      put   "Groups/:id", to: "groups#replace"
     end
   end
 

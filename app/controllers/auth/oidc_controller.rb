@@ -34,9 +34,9 @@ class Auth::OidcController < ApplicationController
 
     redirect_to post_authenticating_url
   rescue Identity::Errors::AccountDeprovisioned
-    redirect_to new_session_path, alert: "Your account has been deprovisioned. Contact an administrator."
+    redirect_to auth_oidc_failure_path(error: "account_deprovisioned")
   rescue Identity::Errors::RelinkDenied
-    redirect_to new_session_path, alert: "Account linking requires administrator action."
+    redirect_to auth_oidc_failure_path(error: "relink_denied")
   rescue Identity::Errors::EmailNotVerified
     redirect_to auth_oidc_failure_path(error: "email_not_verified")
   rescue Identity::Errors::Base => e
@@ -60,7 +60,7 @@ class Auth::OidcController < ApplicationController
   end
 
   def failure
-    @error = params[:error].to_s.humanize
+    @error = params[:error].to_s
   end
 
   private

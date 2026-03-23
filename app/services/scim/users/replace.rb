@@ -66,7 +66,7 @@ module Scim
 
         ProvisioningEvent.record(
           provider:         @provider,
-          event_type:       "scim_patch",
+          event_type:       "scim_replace",
           user:             user,
           success:          true,
           scim_resource_id: @id,

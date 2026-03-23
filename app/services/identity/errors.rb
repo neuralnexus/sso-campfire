@@ -22,6 +22,9 @@ module Identity
     # id_token is expired or not yet valid (outside clock_skew window).
     class TokenExpired < Base; end
 
+    # id_token failed verification (signature, issuer, audience, or format).
+    class TokenInvalid < Base; end
+
     # email_verified claim is false or absent when require_email_verified is set.
     class EmailNotVerified < Base; end
 

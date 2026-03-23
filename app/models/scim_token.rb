@@ -36,7 +36,7 @@ class ScimToken < ApplicationRecord
       if Rails.env.production?
         raise "credentials[:scim_hmac_key] must be set in production"
       else
-        key = Rails.application.secret_key_base
+        key = Digest::SHA256.hexdigest("scim-hmac-dev-#{Rails.application.secret_key_base}")
       end
     end
 

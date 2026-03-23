@@ -19,7 +19,7 @@ module Identity
 
     def call
       sub   = @claims.fetch(@provider.claim_sub)
-      email = @claims[@provider.claim_email]
+      email = @claims[@provider.claim_email].to_s.downcase.strip.presence
 
       external_identity = ExternalIdentity.find_by(
         identity_provider: @provider,
@@ -27,6 +27,10 @@ module Identity
       )
 
       if external_identity
+        return handle_existing(external_identity, email)
+      end
+
+      if (external_identity = claim_scim_provisioned_identity(sub, email))
         return handle_existing(external_identity, email)
       end
 
@@ -117,6 +121,47 @@ module Identity
         user
       end
 
+      def claim_scim_provisioned_identity(sub, email)
+        return nil unless email.present?
+        return nil unless email_verified?
+
+        candidate = ExternalIdentity
+          .includes(:user)
+          .where(identity_provider: @provider)
+          .joins(:user)
+          .where(users: { email_address: email })
+          .detect { |ei| ei.scim_resource_id.present? && ei.provider_subject == ei.scim_resource_id }
+
+        return nil unless candidate
+        return nil if candidate.user.break_glass_admin?
+
+        candidate.update!(
+          provider_subject:    sub,
+          email_at_link_time:  email,
+          last_claims:         @claims,
+          last_authenticated_at: Time.current
+        )
+
+        candidate.user.update!(
+          externally_managed:   true,
+          provisioning_source:  "scim_oidc",
+          last_identity_sync_at: Time.current
+        )
+
+        ProvisioningEvent.record(
+          provider:         @provider,
+          event_type:       "jit_provision",
+          user:             candidate.user,
+          success:          true,
+          external_subject: sub,
+          details:          { method: "scim_claim", email: email }
+        )
+
+        candidate
+      rescue ActiveRecord::RecordNotUnique
+        ExternalIdentity.find_by(identity_provider: @provider, provider_subject: sub)
+      end
+
       def create_jit_user(sub, email)
         name  = @claims[@provider.claim_name].presence || email&.split("@")&.first || "User"
         email = email.presence
@@ -184,12 +229,13 @@ module Identity
         mappings = GroupMapping.resolve_for(provider: @provider, group_ids: group_ids)
         return if mappings.empty?
 
-        mappings.each do |mapping|
-          if mapping.role.present?
-            target_role = mapping.role.to_sym
-            user.update!(role: target_role) if user.role.to_sym != target_role
-          end
+        role_mapping = mappings.find { |mapping| mapping.role.present? }
+        if role_mapping
+          target_role = role_mapping.role.to_sym
+          user.update!(role: target_role) if user.role.to_sym != target_role
+        end
 
+        mappings.each do |mapping|
           if mapping.room_id.present?
             room = Room.find_by(id: mapping.room_id)
             room&.memberships&.find_or_create_by(user: user)

@@ -9,13 +9,16 @@ class SessionsController < ApplicationController
   end
 
   def create
-    if user = User.active.authenticate_by(email_address: params[:email_address], password: params[:password])
-      # In oidc_required mode only break-glass admins may use password login.
-      if identity_mode_oidc_required? && !user.break_glass_admin?
-        render_rejection :forbidden
-        return
-      end
+    user = User.active.find_by(email_address: params[:email_address].to_s.downcase.strip)
 
+    # In oidc_required mode, deny password login for all non-break-glass users
+    # before password verification to avoid credential oracles.
+    if identity_mode_oidc_required? && !user&.break_glass_admin?
+      render_rejection :forbidden
+      return
+    end
+
+    if user&.authenticate(params[:password])
       start_new_session_for user
       redirect_to post_authenticating_url
     else
