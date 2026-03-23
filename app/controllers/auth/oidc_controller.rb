@@ -8,6 +8,11 @@ class Auth::OidcController < ApplicationController
   before_action :load_provider
 
   def start
+    unless oidc_login_enabled?
+      redirect_to new_session_path, alert: "Enterprise login is currently disabled."
+      return
+    end
+
     result = Identity::OidcStart.new(
       session:  session,
       provider: @provider,
@@ -20,6 +25,11 @@ class Auth::OidcController < ApplicationController
   end
 
   def callback
+    unless oidc_login_enabled?
+      redirect_to failure_auth_oidc_path(error: "no_provider_configured")
+      return
+    end
+
     result = Identity::OidcCallback.new(
       params:   params,
       session:  session,
@@ -34,17 +44,22 @@ class Auth::OidcController < ApplicationController
 
     redirect_to post_authenticating_url
   rescue Identity::Errors::AccountDeprovisioned
-    redirect_to auth_oidc_failure_path(error: "account_deprovisioned")
+    redirect_to failure_auth_oidc_path(error: "account_deprovisioned")
   rescue Identity::Errors::RelinkDenied
-    redirect_to auth_oidc_failure_path(error: "relink_denied")
+    redirect_to failure_auth_oidc_path(error: "relink_denied")
   rescue Identity::Errors::EmailNotVerified
-    redirect_to auth_oidc_failure_path(error: "email_not_verified")
+    redirect_to failure_auth_oidc_path(error: "email_not_verified")
   rescue Identity::Errors::Base => e
     Rails.logger.warn("[OIDC] Callback error: #{e.class} — #{e.message}")
-    redirect_to auth_oidc_failure_path(error: e.class.name.demodulize.underscore)
+    redirect_to failure_auth_oidc_path(error: e.class.name.demodulize.underscore)
   end
 
   def logout
+    unless oidc_login_enabled?
+      redirect_to root_path
+      return
+    end
+
     result = Identity::SessionLogout.new(
       user:    Current.user,
       session: session
@@ -66,6 +81,15 @@ class Auth::OidcController < ApplicationController
   private
 
     def load_provider
-      @provider = IdentityProvider.active_oidc
+      if action_name == "callback"
+        provider_id = session[:oidc_provider]
+        @provider = IdentityProvider.enabled.find_by(id: provider_id) if provider_id.present?
+      else
+        @provider = IdentityProvider.active_oidc
+      end
+    end
+
+    def oidc_login_enabled?
+      %w[local_plus_oidc oidc_required].include?(Rails.application.config.x.identity.mode.to_s)
     end
 end

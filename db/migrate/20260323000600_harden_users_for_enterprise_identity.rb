@@ -1,4 +1,4 @@
-class HardenUsersForEnterpriseIdentity < ActiveRecord::Migration[8.0]
+class HardenUsersForEnterpriseIdentity < ActiveRecord::Migration[8.2]
   def change
     change_table :users do |t|
       # break_glass_admin: excluded from SCIM deactivation and OIDC-required enforcement.
@@ -10,7 +10,7 @@ class HardenUsersForEnterpriseIdentity < ActiveRecord::Migration[8.0]
       t.boolean  :externally_managed,    null: false, default: false
 
       # provisioning_source: tracks how the account was created.
-      # Values: "local", "oidc_jit", "scim"
+      # Values: "local", "oidc_jit", "scim", "scim_oidc"
       t.string   :provisioning_source,   default: "local"
 
       t.string   :display_name

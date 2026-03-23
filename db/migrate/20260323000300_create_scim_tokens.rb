@@ -1,4 +1,4 @@
-class CreateScimTokens < ActiveRecord::Migration[8.0]
+class CreateScimTokens < ActiveRecord::Migration[8.2]
   def change
     create_table :scim_tokens do |t|
       t.references :identity_provider, null: false, foreign_key: true

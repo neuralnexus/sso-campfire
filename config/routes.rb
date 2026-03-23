@@ -5,7 +5,7 @@ Rails.application.routes.draw do
 
   # ── Enterprise OIDC ──────────────────────────────────────────────────────────
   namespace :auth do
-    resource :oidc, only: [] do
+    resource :oidc, controller: "oidc", only: [] do
       get    :start
       get    :callback
       post   :callback

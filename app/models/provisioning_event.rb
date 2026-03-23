@@ -6,6 +6,7 @@ class ProvisioningEvent < ApplicationRecord
     jit_provision
     scim_create
     scim_patch
+    scim_replace
     scim_deactivate
     scim_reactivate
     relink_denied

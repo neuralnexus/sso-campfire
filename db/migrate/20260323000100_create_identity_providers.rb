@@ -1,4 +1,4 @@
-class CreateIdentityProviders < ActiveRecord::Migration[8.0]
+class CreateIdentityProviders < ActiveRecord::Migration[8.2]
   def change
     create_table :identity_providers do |t|
       t.string  :name,                        null: false

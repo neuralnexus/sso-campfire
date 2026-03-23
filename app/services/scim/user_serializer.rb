@@ -1,6 +1,6 @@
 module Scim
   # Serializes a User + ExternalIdentity pair into a SCIM 2.0 User resource.
-  # The scim_resource_id is the ExternalIdentity id (stable, opaque to the IdP).
+  # The resource id is ExternalIdentity.scim_resource_id (stable, opaque to the IdP).
   class UserSerializer
     SCHEMA = "urn:ietf:params:scim:schemas:core:2.0:User".freeze
 

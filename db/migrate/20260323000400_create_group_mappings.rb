@@ -1,4 +1,4 @@
-class CreateGroupMappings < ActiveRecord::Migration[8.0]
+class CreateGroupMappings < ActiveRecord::Migration[8.2]
   def change
     create_table :group_mappings do |t|
       t.references :identity_provider, null: false, foreign_key: true

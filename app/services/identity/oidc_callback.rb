@@ -21,6 +21,7 @@ module Identity
     end
 
     def call
+      ensure_provider_available!
       validate_state!
       validate_no_error!
 
@@ -62,6 +63,10 @@ module Identity
     end
 
     private
+
+      def ensure_provider_available!
+        raise Errors::NoProviderConfigured if @provider.nil? || !@provider.enabled?
+      end
 
       def validate_state!
         stored = @session.delete(:oidc_state)

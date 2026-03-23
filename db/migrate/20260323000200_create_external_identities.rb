@@ -1,4 +1,4 @@
-class CreateExternalIdentities < ActiveRecord::Migration[8.0]
+class CreateExternalIdentities < ActiveRecord::Migration[8.2]
   def change
     create_table :external_identities do |t|
       t.references :user,              null: false, foreign_key: true
