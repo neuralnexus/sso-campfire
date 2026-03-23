@@ -31,6 +31,14 @@
         <% end %>
       </fieldset>
     <% end %>
+
+    <% if IdentityProvider.active_oidc.present? %>
+      <hr class="separator full-width" style="--border-style: solid">
+      <%= link_to start_auth_oidc_path, class: "btn btn--reversed center txt-large" do %>
+        <%= image_tag "arrow-right.svg", aria: { hidden: "true" } %>
+        <span>Sign in with SSO</span>
+      <% end %>
+    <% end %>
   </div>
 
   <%= render "accounts/help_contact" %>

@@ -1,0 +1,18 @@
+<% @page_title = "New Group Mapping — #{@provider.name}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to admin_identity_provider_path(@provider) %>
+  </div>
+<% end %>
+
+<section class="panel panel--wide flex flex-column gap">
+  <div class="pad-inline pad-block-start">
+    <h1 class="margin-none">New Group Mapping</h1>
+    <p class="txt-subtle txt-small">Provider: <strong><%= @provider.name %></strong></p>
+  </div>
+
+  <div class="pad-inline pad-block">
+    <%= render "form", provider: @provider, mapping: @mapping %>
+  </div>
+</section>

@@ -1,0 +1,34 @@
+<% @page_title = "New SCIM Token — #{@provider.name}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to admin_identity_provider_path(@provider) %>
+  </div>
+<% end %>
+
+<section class="panel flex flex-column gap txt-align-center">
+  <%= image_tag "password.svg", aria: { hidden: "true" }, size: 48, class: "center colorize--black" %>
+
+  <h1 class="txt-large">New SCIM Bearer Token</h1>
+
+  <p class="txt-subtle">
+    Copy this token now. It will <strong>never be shown again</strong>.
+    All previous SCIM tokens for this provider have been revoked.
+  </p>
+
+  <div class="pad-inline pad-block fill-shade border-radius" data-controller="clipboard"
+       style="word-break: break-all; font-family: monospace; font-size: 0.9em; text-align: left">
+    <code id="scim-token-value"><%= @raw_token %></code>
+  </div>
+
+  <p class="txt-subtle txt-small">
+    Configure your IdP's SCIM provisioning with:<br>
+    <strong>Base URL:</strong> <code><%= request.base_url %>/scim/v2</code><br>
+    <strong>Auth:</strong> Bearer token (paste the value above)
+  </p>
+
+  <%= link_to admin_identity_provider_path(@provider), class: "btn btn--reversed center" do %>
+    <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>
+    <span>Done — I've saved the token</span>
+  <% end %>
+</section>

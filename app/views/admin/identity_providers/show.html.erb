@@ -1,0 +1,190 @@
+<% @page_title = @provider.name %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to admin_identity_providers_path %>
+  </div>
+  <div class="flex align-center gap flex-item-justify-end">
+    <%= link_to edit_admin_identity_provider_path(@provider), class: "btn" do %>
+      <%= image_tag "compose.svg", aria: { hidden: "true" }, size: 20 %>
+      <span class="for-screen-reader">Edit</span>
+    <% end %>
+  </div>
+<% end %>
+
+<section class="panel panel--wide flex flex-column gap">
+  <%# ── Header ──────────────────────────────────────────────────────────────── %>
+  <div class="flex align-center gap pad-inline pad-block-start">
+    <div class="flex-item-grow flex flex-column gap" style="--row-gap: 0.25em">
+      <h1 class="margin-none"><%= @provider.name %></h1>
+      <span class="txt-subtle txt-small"><%= @provider.issuer %></span>
+    </div>
+
+    <% if @provider.enabled? %>
+      <%= button_to disable_admin_identity_provider_path(@provider), method: :post, class: "btn btn--negative" do %>
+        <%= image_tag "minus.svg", aria: { hidden: "true" }, size: 20 %>
+        <span>Disable</span>
+      <% end %>
+    <% else %>
+      <%= button_to enable_admin_identity_provider_path(@provider), method: :post, class: "btn btn--positive" do %>
+        <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>
+        <span>Enable</span>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%# ── Status badges ───────────────────────────────────────────────────────── %>
+  <div class="flex gap pad-inline" style="flex-wrap: wrap">
+    <span class="btn txt-small <%= @provider.enabled? ? "btn--positive" : "" %>">
+      <%= @provider.enabled? ? "Enabled" : "Disabled" %>
+    </span>
+    <span class="btn txt-small"><%= @provider.protocol.upcase %></span>
+    <% if @provider.require_pkce? %>
+      <span class="btn txt-small">PKCE</span>
+    <% end %>
+    <% if @provider.jit_provisioning? %>
+      <span class="btn txt-small">JIT provisioning</span>
+    <% end %>
+    <% if @provider.scim_enabled? %>
+      <span class="btn txt-small">SCIM</span>
+    <% end %>
+  </div>
+
+  <%# ── Endpoints ───────────────────────────────────────────────────────────── %>
+  <div class="pad-inline pad-block fill-shade border-radius margin-inline">
+    <table class="full-width" style="border-collapse: collapse; font-size: 0.875em">
+      <% [
+        ["Discovery URL",    @provider.discovery_url],
+        ["Authorization",    @provider.authorization_endpoint],
+        ["Token",            @provider.token_endpoint],
+        ["Userinfo",         @provider.userinfo_endpoint],
+        ["JWKS URI",         @provider.jwks_uri],
+        ["End session",      @provider.end_session_endpoint],
+        ["Last refreshed",   @provider.last_metadata_refresh_at&.to_fs(:db) || "Never"],
+      ].each do |label, value| %>
+        <tr style="border-bottom: 1px solid var(--color-border)">
+          <td class="pad-block txt-subtle" style="width: 10em; padding-right: 1em"><%= label %></td>
+          <td class="pad-block txt-small" style="word-break: break-all"><%= value.presence || "—" %></td>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+
+  <%# ── Actions ─────────────────────────────────────────────────────────────── %>
+  <div class="flex gap pad-inline" style="flex-wrap: wrap">
+    <%= button_to refresh_metadata_admin_identity_provider_path(@provider), method: :post, class: "btn" do %>
+      <%= image_tag "arrow-right.svg", aria: { hidden: "true" }, size: 20 %>
+      <span>Refresh metadata</span>
+    <% end %>
+
+    <%= link_to test_configuration_admin_identity_provider_path(@provider), class: "btn" do %>
+      <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>
+      <span>Test configuration</span>
+    <% end %>
+
+    <% if @provider.scim_enabled? %>
+      <%= button_to rotate_scim_token_admin_identity_provider_path(@provider), method: :post,
+            class: "btn btn--negative",
+            data: { confirm: "This will revoke all existing SCIM tokens. Continue?" } do %>
+        <%= image_tag "password.svg", aria: { hidden: "true" }, size: 20 %>
+        <span>Rotate SCIM token</span>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%# ── SCIM endpoint info ───────────────────────────────────────────────────── %>
+  <% if @provider.scim_enabled? %>
+    <div class="pad-inline pad-block fill-shade border-radius margin-inline">
+      <p class="txt-small margin-none-block-start"><strong>SCIM base URL</strong></p>
+      <code class="txt-small"><%= request.base_url %>/scim/v2</code>
+      <p class="txt-small txt-subtle margin-none-block-start">
+        Configure this URL in your IdP's SCIM provisioning settings.
+        Use <em>Rotate SCIM token</em> above to generate a bearer token.
+      </p>
+    </div>
+  <% end %>
+
+  <%# ── Group mappings ──────────────────────────────────────────────────────── %>
+  <div class="flex align-center gap pad-inline">
+    <h2 class="margin-none flex-item-grow txt-large">Group Mappings</h2>
+    <%= link_to new_admin_identity_provider_group_mapping_path(@provider), class: "btn" do %>
+      <%= image_tag "add.svg", aria: { hidden: "true" }, size: 20 %>
+      <span>Add mapping</span>
+    <% end %>
+  </div>
+
+  <% mappings = @provider.group_mappings.ordered %>
+  <% if mappings.none? %>
+    <p class="pad-inline txt-subtle txt-small">
+      No group mappings. Groups from OIDC claims or SCIM do nothing until a mapping is created.
+    </p>
+  <% else %>
+    <menu class="flex flex-column gap margin-none pad">
+      <% mappings.each do |m| %>
+        <li class="flex align-center gap pad-block pad-inline fill-shade border-radius">
+          <div class="flex-item-grow flex flex-column gap" style="--row-gap: 0.2em">
+            <strong class="txt-small"><%= m.external_group_name.presence || m.external_group_id %></strong>
+            <span class="txt-subtle txt-small">
+              ID: <code><%= m.external_group_id %></code>
+              <% if m.role.present? %> → role: <strong><%= m.role %></strong><% end %>
+              <% if m.room_id.present? %> → room #<%= m.room_id %><% end %>
+            </span>
+          </div>
+          <span class="txt-subtle txt-small">priority <%= m.priority %></span>
+          <%= link_to edit_admin_identity_provider_group_mapping_path(@provider, m), class: "btn" do %>
+            <%= image_tag "compose.svg", aria: { hidden: "true" }, size: 20 %>
+            <span class="for-screen-reader">Edit</span>
+          <% end %>
+          <%= button_to admin_identity_provider_group_mapping_path(@provider, m), method: :delete, class: "btn btn--negative",
+                data: { confirm: "Remove this group mapping?" } do %>
+            <%= image_tag "minus.svg", aria: { hidden: "true" }, size: 20 %>
+            <span class="for-screen-reader">Remove</span>
+          <% end %>
+        </li>
+      <% end %>
+    </menu>
+  <% end %>
+
+  <%# ── Recent provisioning events ─────────────────────────────────────────── %>
+  <div class="pad-inline">
+    <h2 class="txt-large">Recent Events</h2>
+  </div>
+
+  <% if @events.none? %>
+    <p class="pad-inline txt-subtle txt-small">No provisioning events yet.</p>
+  <% else %>
+    <div class="pad-inline pad-block" style="overflow-x: auto">
+      <table class="full-width txt-small" style="border-collapse: collapse">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--color-border)">
+            <th class="pad-block txt-align-start txt-subtle" style="padding-right: 1em">Time</th>
+            <th class="pad-block txt-align-start txt-subtle" style="padding-right: 1em">Event</th>
+            <th class="pad-block txt-align-start txt-subtle" style="padding-right: 1em">User</th>
+            <th class="pad-block txt-align-start txt-subtle">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @events.each do |event| %>
+            <tr style="border-bottom: 1px solid var(--color-border)">
+              <td class="pad-block txt-subtle" style="padding-right: 1em; white-space: nowrap">
+                <%= event.created_at.to_fs(:db) %>
+              </td>
+              <td class="pad-block" style="padding-right: 1em">
+                <code><%= event.event_type %></code>
+              </td>
+              <td class="pad-block txt-subtle" style="padding-right: 1em">
+                <%= event.user&.name || event.external_subject || "—" %>
+              </td>
+              <td class="pad-block">
+                <span style="color: <%= event.success? ? "var(--color-positive)" : "var(--color-negative)" %>">
+                  <%= event.success? ? "OK" : "Failed" %>
+                  <% if event.status_code.present? %>(<%= event.status_code %>)<% end %>
+                </span>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>

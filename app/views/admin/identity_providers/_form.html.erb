@@ -1,0 +1,139 @@
+<%= form_with model: [:admin, provider], class: "flex flex-column gap" do |form| %>
+  <% if provider.errors.any? %>
+    <div class="pad-inline pad-block fill-shade border-radius">
+      <ul class="flex flex-column gap margin-none" style="--row-gap: 0.25em">
+        <% provider.errors.full_messages.each do |msg| %>
+          <li class="txt-small" style="color: var(--color-negative)"><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <fieldset class="flex flex-column gap pad fill-shade border-radius">
+    <legend class="txt-large"><strong>Basic</strong></legend>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Name</span>
+      <%= form.text_field :name, class: "input flex-item-grow", placeholder: "e.g. Okta", required: true %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Protocol</span>
+      <%= form.select :protocol, [["OIDC", "oidc"]], {}, class: "input flex-item-grow" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Issuer URL</span>
+      <%= form.url_field :issuer, class: "input flex-item-grow", placeholder: "https://your-idp.example.com", required: true %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Discovery URL</span>
+      <%= form.url_field :discovery_url, class: "input flex-item-grow",
+            placeholder: "https://your-idp.example.com/.well-known/openid-configuration", required: true %>
+    </label>
+  </fieldset>
+
+  <fieldset class="flex flex-column gap pad fill-shade border-radius">
+    <legend class="txt-large"><strong>Credentials</strong></legend>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Client ID</span>
+      <%= form.text_field :client_id, class: "input flex-item-grow", required: true, autocomplete: "off" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Client Secret</span>
+      <%= form.password_field :encrypted_client_secret, class: "input flex-item-grow",
+            autocomplete: "new-password",
+            placeholder: provider.persisted? ? "(unchanged)" : "Paste client secret" %>
+    </label>
+  </fieldset>
+
+  <fieldset class="flex flex-column gap pad fill-shade border-radius">
+    <legend class="txt-large"><strong>Scopes &amp; Claims</strong></legend>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Scopes</span>
+      <%= form.text_field :scopes, class: "input flex-item-grow", placeholder: "openid email profile" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Subject claim</span>
+      <%= form.text_field :claim_sub, class: "input flex-item-grow", placeholder: "sub" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Email claim</span>
+      <%= form.text_field :claim_email, class: "input flex-item-grow", placeholder: "email" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Email verified claim</span>
+      <%= form.text_field :claim_email_verified, class: "input flex-item-grow", placeholder: "email_verified" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Name claim</span>
+      <%= form.text_field :claim_name, class: "input flex-item-grow", placeholder: "name" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Groups claim</span>
+      <%= form.text_field :claim_groups, class: "input flex-item-grow", placeholder: "groups" %>
+    </label>
+  </fieldset>
+
+  <fieldset class="flex flex-column gap pad fill-shade border-radius">
+    <legend class="txt-large"><strong>Security</strong></legend>
+
+    <label class="flex align-center gap">
+      <span class="txt-small flex-item-grow">Require PKCE</span>
+      <%= form.check_box :require_pkce, class: "input" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small flex-item-grow">Require email_verified claim</span>
+      <%= form.check_box :require_email_verified, class: "input" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small flex-item-grow">Allow email-based account linking</span>
+      <%= form.check_box :allow_email_linking, class: "input" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small flex-item-grow">JIT provisioning (create users on first login)</span>
+      <%= form.check_box :jit_provisioning, class: "input" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small flex-item-grow">SCIM enabled</span>
+      <%= form.check_box :scim_enabled, class: "input" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small flex-item-grow">Soft-delete on SCIM deactivate (recommended)</span>
+      <%= form.check_box :soft_delete_on_scim_deactivate, class: "input" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 10em">Clock skew (seconds)</span>
+      <%= form.number_field :clock_skew_seconds, class: "input", min: 0, max: 300, style: "width: 6em" %>
+    </label>
+  </fieldset>
+
+  <div class="flex gap">
+    <%= form.button class: "btn btn--reversed", type: "submit" do %>
+      <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>
+      <span><%= provider.persisted? ? "Save changes" : "Create provider" %></span>
+    <% end %>
+
+    <% if provider.persisted? %>
+      <%= link_to admin_identity_provider_path(provider), class: "btn" do %>
+        <%= image_tag "arrow-left.svg", aria: { hidden: "true" }, size: 20 %>
+        <span>Cancel</span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

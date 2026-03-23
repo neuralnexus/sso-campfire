@@ -1,0 +1,13 @@
+# Refresh OIDC provider metadata every 6 hours.
+# Install by running: crontab -e
+# Adjust the path to match your deployment root.
+#
+# This keeps authorization_endpoint, token_endpoint, jwks_uri, and
+# end_session_endpoint current without requiring manual admin action.
+# The job validates that the fetched issuer still matches the configured
+# value before writing any updates.
+#
+# 0 */6 * * *  cd /var/www/campfire && bin/rails runner "Identity::RefreshMetadataJob.perform_now" >> log/identity_refresh.log 2>&1
+#
+# Alternatively, if you use systemd timers, create a .timer unit that
+# calls the same rails runner command.

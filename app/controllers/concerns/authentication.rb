@@ -5,6 +5,7 @@ module Authentication
   included do
     before_action :require_authentication
     before_action :deny_bots
+    before_action :enforce_active_account
     helper_method :signed_in?
 
     protect_from_forgery with: :exception, unless: -> { authenticated_by.bot_key? }
@@ -13,6 +14,7 @@ module Authentication
   class_methods do
     def allow_unauthenticated_access(**options)
       skip_before_action :require_authentication, **options
+      skip_before_action :enforce_active_account, **options
     end
 
     def allow_bot_access(**options)
@@ -21,6 +23,7 @@ module Authentication
 
     def require_unauthenticated_access(**options)
       skip_before_action :require_authentication, **options
+      skip_before_action :enforce_active_account, **options
       before_action :restore_authentication, :redirect_signed_in_user_to_root, **options
     end
   end
@@ -48,12 +51,31 @@ module Authentication
     end
 
     def request_authentication
-      session[:return_to_after_authenticating] = request.url
-      redirect_to new_session_url
+      # In oidc_required mode, send non-OIDC users directly to the OIDC start
+      # endpoint rather than the password login form.
+      if identity_mode_oidc_required?
+        session[:return_to_after_authenticating] = request.url
+        redirect_to start_auth_oidc_path
+      else
+        session[:return_to_after_authenticating] = request.url
+        redirect_to new_session_url
+      end
     end
 
     def redirect_signed_in_user_to_root
       redirect_to root_url if signed_in?
+    end
+
+    # Blocks deprovisioned or deactivated users from resuming sessions.
+    # Break-glass admins are always permitted through.
+    def enforce_active_account
+      return unless signed_in?
+      return if Current.user.break_glass_admin?
+
+      unless Current.user.active?
+        terminate_current_session
+        redirect_to new_session_url, alert: "Your account has been deactivated."
+      end
     end
 
     def start_new_session_for(user)
@@ -101,5 +123,16 @@ module Authentication
 
     def authenticated_by
       @authenticated_by ||= "".inquiry
+    end
+
+    # Identity mode controls which login paths are available.
+    # Modes: "local_only" | "local_plus_oidc" | "oidc_required"
+    # Configured via Rails.application.config.x.identity.mode
+    def identity_mode
+      Rails.application.config.x.identity.mode.to_s
+    end
+
+    def identity_mode_oidc_required?
+      identity_mode == "oidc_required" && IdentityProvider.active_oidc.present?
     end
 end
