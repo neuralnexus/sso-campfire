@@ -43,6 +43,36 @@ For example:
       --env TLS_DOMAIN=chat.example.com \
       campfire
 
+## Enterprise identity (OIDC + SCIM)
+
+Campfire includes a native enterprise identity subsystem with:
+
+- OIDC for authentication
+- SCIM 2.0 for user and group lifecycle
+- Identity modes via `IDENTITY_MODE`: `local_only`, `local_plus_oidc`, `oidc_required`
+
+Production setup requirements:
+
+- Set `LOCKBOX_MASTER_KEY` (or `credentials[:lockbox][:master_key]`) so provider client secrets can be encrypted at rest.
+- Set `credentials[:scim_hmac_key]` for SCIM token fingerprinting. In production this key is required and there is no fallback.
+
+Recommended rollout:
+
+1. Start in `IDENTITY_MODE=local_only`.
+2. Create an identity provider at `/admin/identity_providers/new`.
+3. Save it disabled, then use **Refresh metadata** to fetch discovery endpoints (token/JWKS/userinfo).
+4. Enable provider and switch to `IDENTITY_MODE=local_plus_oidc`.
+5. Validate enterprise login and break-glass local admin login.
+6. Switch to `IDENTITY_MODE=oidc_required`.
+
+Notes:
+
+- OIDC callback uses cached provider metadata from the database and does not fetch discovery documents live during login.
+- SCIM `DELETE /scim/v2/Users/:id` soft-deactivates users and revokes sessions; it does not hard-delete history.
+- Break-glass admins remain exempt from OIDC enforcement and SCIM deprovisioning.
+
+Metadata refresh can be scheduled with `config/identity_metadata_cron.example`.
+
 ## Running in development
 
     bin/setup

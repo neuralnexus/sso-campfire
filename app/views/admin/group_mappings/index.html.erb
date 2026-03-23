@@ -1,0 +1,58 @@
+<% @page_title = "Group Mappings — #{@provider.name}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to admin_identity_provider_path(@provider) %>
+  </div>
+  <div class="flex-item-justify-end">
+    <%= link_to new_admin_identity_provider_group_mapping_path(@provider), class: "btn btn--reversed" do %>
+      <%= image_tag "add.svg", aria: { hidden: "true" }, size: 20 %>
+      <span>New mapping</span>
+    <% end %>
+  </div>
+<% end %>
+
+<section class="panel panel--wide flex flex-column gap">
+  <div class="pad-inline pad-block-start">
+    <h1 class="margin-none">Group Mappings</h1>
+    <p class="txt-subtle txt-small">
+      Groups from OIDC claims or SCIM only take effect when an explicit mapping exists here.
+    </p>
+  </div>
+
+  <% if @mappings.none? %>
+    <div class="pad-inline pad-block txt-align-center txt-subtle">
+      <p>No group mappings yet.</p>
+    </div>
+  <% else %>
+    <menu class="flex flex-column gap margin-none pad">
+      <% @mappings.each do |m| %>
+        <li class="flex align-center gap pad-block pad-inline fill-shade border-radius">
+          <div class="flex-item-grow flex flex-column gap" style="--row-gap: 0.2em">
+            <strong><%= m.external_group_name.presence || m.external_group_id %></strong>
+            <span class="txt-subtle txt-small">
+              <code><%= m.external_group_id %></code>
+              <% if m.role.present? %> → <strong><%= m.role %></strong><% end %>
+              <% if m.room_id.present? %> → room #<%= m.room_id %><% end %>
+              · priority <%= m.priority %>
+            </span>
+          </div>
+
+          <span class="txt-subtle txt-small"><%= m.enabled? ? "Active" : "Disabled" %></span>
+
+          <%= link_to edit_admin_identity_provider_group_mapping_path(@provider, m), class: "btn" do %>
+            <%= image_tag "compose.svg", aria: { hidden: "true" }, size: 20 %>
+            <span class="for-screen-reader">Edit</span>
+          <% end %>
+
+          <%= button_to admin_identity_provider_group_mapping_path(@provider, m), method: :delete,
+                class: "btn btn--negative",
+                data: { confirm: "Remove this group mapping?" } do %>
+            <%= image_tag "minus.svg", aria: { hidden: "true" }, size: 20 %>
+            <span class="for-screen-reader">Remove</span>
+          <% end %>
+        </li>
+      <% end %>
+    </menu>
+  <% end %>
+</section>

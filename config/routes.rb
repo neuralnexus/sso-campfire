@@ -3,6 +3,51 @@ Rails.application.routes.draw do
 
   resource :first_run
 
+  # ── Enterprise OIDC ──────────────────────────────────────────────────────────
+  namespace :auth do
+    resource :oidc, controller: "oidc", only: [] do
+      get    :start
+      get    :callback
+      post   :callback
+      delete :logout
+      get    :failure
+    end
+  end
+
+  # ── SCIM 2.0 ─────────────────────────────────────────────────────────────────
+  # Mounted under /scim/v2 with SCIM-style capitalised resource names.
+  # All routes are protected by bearer token auth in Scim::V2::BaseController.
+  namespace :scim do
+    namespace :v2 do
+      get  "ServiceProviderConfig", to: "service_provider_config#show"
+      get  "Schemas",               to: "schemas#index"
+      get  "ResourceTypes",         to: "resource_types#index"
+
+      resources "Users", controller: "users", only: %i[index show create destroy]
+      patch "Users/:id", to: "users#patch"
+      put   "Users/:id", to: "users#replace"
+
+      resources "Groups", controller: "groups", only: %i[index show create]
+      patch "Groups/:id", to: "groups#patch"
+      put   "Groups/:id", to: "groups#replace"
+    end
+  end
+
+  # ── Admin: identity provider management ──────────────────────────────────────
+  namespace :admin do
+    resources :identity_providers, except: %i[destroy] do
+      member do
+        post :enable
+        post :disable
+        post :rotate_scim_token
+        post :refresh_metadata
+        get  :test_configuration
+      end
+
+      resources :group_mappings, except: %i[show]
+    end
+  end
+
   resource :session do
     scope module: "sessions" do
       resources :transfers, only: %i[ show update ]

@@ -9,7 +9,7 @@ on:
 permissions: {}
 
 jobs:
-  scan:
+  sast:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -26,8 +26,80 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
-      - name: Scan for security vulnerabilities
+      - name: Run Brakeman (SAST)
         run: bin/brakeman
+
+  dast:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      redis:
+        image: redis # zizmor: ignore[unpinned-images] -- version tag is fine for service containers
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      RAILS_ENV: test
+      REDIS_URL: redis://localhost:6379/0
+
+    steps:
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libsqlite3-0 libvips curl ffmpeg
+
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1.295.0
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Prepare database
+        run: bin/rails db:setup
+
+      - name: Start app server
+        run: bin/rails server -b 127.0.0.1 -p 3000 > /tmp/rails-dast.log 2>&1 &
+
+      - name: Wait for app
+        run: |
+          for _ in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/up >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "App failed to boot in time"
+          exit 1
+
+      - name: Run ZAP baseline scan (DAST)
+        run: |
+          docker run --rm --network host \
+            -v "$PWD:/zap/wrk:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+            -t http://127.0.0.1:3000 \
+            -m 3 \
+            -I \
+            -r zap-report.html \
+            -J zap-report.json
+
+      - name: Upload DAST report
+        if: always()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: dast-report
+          path: |
+            zap-report.html
+            zap-report.json
+            /tmp/rails-dast.log
+
+      - name: Stop app server
+        if: always()
+        run: pkill -f "bin/rails server" || true
 
   lint:
     runs-on: ubuntu-latest

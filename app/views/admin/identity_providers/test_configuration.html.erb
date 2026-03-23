@@ -1,0 +1,65 @@
+<% @page_title = "Test Configuration — #{@provider.name}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to admin_identity_provider_path(@provider) %>
+  </div>
+<% end %>
+
+<section class="panel flex flex-column gap">
+  <div class="pad-inline pad-block-start">
+    <h1 class="margin-none">Configuration Check: <%= @provider.name %></h1>
+  </div>
+
+  <% if @errors.empty? %>
+    <div class="pad-inline pad-block fill-shade border-radius margin-inline flex align-center gap">
+      <%= image_tag "check.svg", aria: { hidden: "true" }, size: 24, class: "colorize--black" %>
+      <span>All checks passed. The provider configuration is valid.</span>
+    </div>
+  <% else %>
+    <div class="pad-inline pad-block fill-shade border-radius margin-inline">
+      <p class="txt-small" style="color: var(--color-negative)"><strong>Configuration errors:</strong></p>
+      <ul class="flex flex-column gap margin-none" style="--row-gap: 0.4em">
+        <% @errors.each do |error| %>
+          <li class="txt-small" style="color: var(--color-negative)"><%= error %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="pad-inline pad-block fill-shade border-radius margin-inline">
+    <p class="txt-small txt-subtle margin-none-block-start"><strong>Provider details</strong></p>
+    <table style="border-collapse: collapse; font-size: 0.875em; width: 100%">
+      <% [
+        ["Protocol",         @provider.protocol.upcase],
+        ["Issuer",           @provider.issuer],
+        ["Discovery URL",    @provider.discovery_url],
+        ["Client ID",        @provider.client_id],
+        ["Scopes",           @provider.scopes],
+        ["PKCE required",    @provider.require_pkce? ? "Yes" : "No"],
+        ["Email verified",   @provider.require_email_verified? ? "Required" : "Optional"],
+        ["JIT provisioning", @provider.jit_provisioning? ? "Enabled" : "Disabled"],
+        ["SCIM",             @provider.scim_enabled? ? "Enabled" : "Disabled"],
+      ].each do |label, value| %>
+        <tr style="border-bottom: 1px solid var(--color-border)">
+          <td class="pad-block txt-subtle" style="width: 12em; padding-right: 1em"><%= label %></td>
+          <td class="pad-block"><%= value %></td>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+
+  <div class="flex gap pad-inline">
+    <%= link_to admin_identity_provider_path(@provider), class: "btn" do %>
+      <%= image_tag "arrow-left.svg", aria: { hidden: "true" }, size: 20 %>
+      <span>Back</span>
+    <% end %>
+
+    <% if @provider.enabled? %>
+      <%= link_to start_auth_oidc_path, class: "btn btn--reversed" do %>
+        <%= image_tag "arrow-right.svg", aria: { hidden: "true" }, size: 20 %>
+        <span>Test login flow</span>
+      <% end %>
+    <% end %>
+  </div>
+</section>

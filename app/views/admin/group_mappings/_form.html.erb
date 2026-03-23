@@ -1,0 +1,79 @@
+<%= form_with model: [:admin, provider, mapping], class: "flex flex-column gap" do |form| %>
+  <% if mapping.errors.any? %>
+    <div class="pad-inline pad-block fill-shade border-radius">
+      <ul class="flex flex-column gap margin-none" style="--row-gap: 0.25em">
+        <% mapping.errors.full_messages.each do |msg| %>
+          <li class="txt-small" style="color: var(--color-negative)"><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <fieldset class="flex flex-column gap pad fill-shade border-radius">
+    <legend class="txt-large"><strong>Group Identity</strong></legend>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 12em">External group ID</span>
+      <%= form.text_field :external_group_id, class: "input flex-item-grow",
+            placeholder: "e.g. 00g1ab2cd3ef4gh5ij6k",
+            title: "The stable group identifier from your IdP (not the display name)" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 12em">Display name</span>
+      <%= form.text_field :external_group_name, class: "input flex-item-grow",
+            placeholder: "e.g. Engineering" %>
+    </label>
+  </fieldset>
+
+  <fieldset class="flex flex-column gap pad fill-shade border-radius">
+    <legend class="txt-large"><strong>Effect</strong></legend>
+
+    <p class="txt-small txt-subtle margin-none">
+      At least one of role or room must be set. Both may be set together.
+    </p>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 12em">Grant role</span>
+      <%= form.select :role,
+            [["(none)", ""], ["Member", "member"], ["Administrator", "administrator"]],
+            { selected: mapping.role },
+            class: "input flex-item-grow" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 12em">Add to room</span>
+      <%= form.select :room_id,
+            Room.where(type: ["Rooms::Open", "Rooms::Closed"]).order(:name).map { |r| [r.name, r.id] },
+            { include_blank: "(none)", selected: mapping.room_id },
+            class: "input flex-item-grow" %>
+    </label>
+  </fieldset>
+
+  <fieldset class="flex flex-column gap pad fill-shade border-radius">
+    <legend class="txt-large"><strong>Options</strong></legend>
+
+    <label class="flex align-center gap">
+      <span class="txt-small flex-item-grow">Enabled</span>
+      <%= form.check_box :enabled, class: "input" %>
+    </label>
+
+    <label class="flex align-center gap">
+      <span class="txt-small" style="min-width: 12em">Priority</span>
+      <%= form.number_field :priority, class: "input", min: 1, max: 999, style: "width: 5em",
+            title: "Lower number = higher priority when multiple mappings match" %>
+    </label>
+  </fieldset>
+
+  <div class="flex gap">
+    <%= form.button class: "btn btn--reversed", type: "submit" do %>
+      <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>
+      <span><%= mapping.persisted? ? "Save changes" : "Create mapping" %></span>
+    <% end %>
+
+    <%= link_to admin_identity_provider_path(provider), class: "btn" do %>
+      <%= image_tag "arrow-left.svg", aria: { hidden: "true" }, size: 20 %>
+      <span>Cancel</span>
+    <% end %>
+  </div>
+<% end %>

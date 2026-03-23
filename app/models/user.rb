@@ -1,6 +1,8 @@
 class User < ApplicationRecord
   include Avatar, Bannable, Bot, Mentionable, Role, Transferable
 
+  serialize :identity_metadata, coder: JSON
+
   has_many :memberships, dependent: :delete_all
   has_many :rooms, through: :memberships
 
@@ -12,8 +14,10 @@ class User < ApplicationRecord
   has_many :boosts, dependent: :destroy, foreign_key: :booster_id
   has_many :searches, dependent: :delete_all
 
-  has_many :sessions, dependent: :destroy
-  has_many :bans, dependent: :destroy
+  has_many :sessions,            dependent: :destroy
+  has_many :bans,                dependent: :destroy
+  has_many :external_identities, dependent: :destroy
+  has_many :provisioning_events, dependent: :nullify
 
   enum :status, %i[ active deactivated banned ], default: :active
 
@@ -32,7 +36,16 @@ class User < ApplicationRecord
     [ name, bio ].compact_blank.join(" – ")
   end
 
+  # Break-glass admins are excluded from SCIM deactivation and OIDC-required
+  # enforcement. This flag is set only during first-run bootstrap and cannot
+  # be set via SCIM, OIDC claims, or the normal admin UI.
+  def protected_from_scim?
+    break_glass_admin?
+  end
+
   def deactivate
+    raise "Cannot deactivate break-glass admin via normal path" if break_glass_admin?
+
     transaction do
       close_remote_connections
 
@@ -41,7 +54,7 @@ class User < ApplicationRecord
       searches.delete_all
       sessions.delete_all
 
-      update! status: :deactivated, email_address: deactived_email_address
+      update! status: :deactivated, disabled_at: Time.current, email_address: deactived_email_address
     end
   end
 

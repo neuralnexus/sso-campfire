@@ -1,0 +1,17 @@
+<% @page_title = "New Identity Provider" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to admin_identity_providers_path %>
+  </div>
+<% end %>
+
+<section class="panel panel--wide flex flex-column gap">
+  <div class="pad-inline pad-block-start">
+    <h1 class="margin-none">New Identity Provider</h1>
+  </div>
+
+  <div class="pad-inline pad-block">
+    <%= render "form", provider: @provider %>
+  </div>
+</section>

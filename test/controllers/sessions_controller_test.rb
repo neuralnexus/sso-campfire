@@ -43,6 +43,30 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_nil parsed_cookies.signed[:session_token]
   end
 
+  test "create in oidc_required mode rejects non-break-glass password login" do
+    with_identity_mode("oidc_required") do
+      with_active_oidc_provider do
+        post session_url, params: { email_address: "david@37signals.com", password: "secret123456" }
+      end
+    end
+
+    assert_response :forbidden
+    assert_nil parsed_cookies.signed[:session_token]
+  end
+
+  test "create in oidc_required mode allows break-glass password login" do
+    users(:david).update!(break_glass_admin: true)
+
+    with_identity_mode("oidc_required") do
+      with_active_oidc_provider do
+        post session_url, params: { email_address: "david@37signals.com", password: "secret123456" }
+      end
+    end
+
+    assert_redirected_to root_url
+    assert parsed_cookies.signed[:session_token]
+  end
+
   test "destroy" do
     sign_in :david
     session = users(:david).sessions.last
@@ -66,4 +90,21 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url
     assert_not cookies[:session_token].present?
   end
+
+  private
+
+    def with_identity_mode(mode)
+      previous_mode = Rails.application.config.x.identity.mode
+      Rails.application.config.x.identity.mode = mode
+      yield
+    ensure
+      Rails.application.config.x.identity.mode = previous_mode
+    end
+
+    def with_active_oidc_provider
+      IdentityProvider.stubs(:active_oidc).returns(stub)
+      yield
+    ensure
+      IdentityProvider.unstub(:active_oidc)
+    end
 end

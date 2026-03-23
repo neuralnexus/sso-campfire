@@ -36,6 +36,12 @@ gem "sentry-rails"
 # Other
 gem "bcrypt"
 gem "web-push"
+
+# Enterprise identity
+# omniauth-openid-connect pulls openid_connect 0.9.x which uses alias_method_chain
+# (removed in Ruby 3). We implement OIDC natively via jwt + Net::HTTP instead.
+gem "rack-attack"
+gem "lockbox"
 gem "rqrcode"
 gem "rails_autolink"
 gem "geared_pagination"

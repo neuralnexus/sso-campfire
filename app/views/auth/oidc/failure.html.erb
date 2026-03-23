@@ -1,0 +1,44 @@
+<% @page_title = "Sign-in failed" %>
+
+<section class="txt-align-center">
+  <div class="panel">
+    <%= account_logo_tag style: "center margin-block-end txt-xx-large" %>
+
+    <h1 class="txt-large">Sign-in failed</h1>
+
+    <p class="txt-subtle">
+      <% case @error %>
+      <% when "account_deprovisioned" %>
+        Your account has been deprovisioned. Contact an administrator to regain access.
+      <% when "email_not_verified" %>
+        Your identity provider did not confirm your email address. Verify your email with your IdP and try again.
+      <% when "relink_denied" %>
+        Your account requires administrator action before you can sign in with enterprise SSO.
+      <% when "state_mismatch", "nonce_mismatch" %>
+        The sign-in request could not be verified. This can happen if you used the back button or opened the link in a new tab. Please try again.
+      <% when "token_expired" %>
+        The sign-in token has expired. Please try again.
+      <% when "token_invalid" %>
+        The sign-in token could not be verified. Please try again.
+      <% when "no_provider_configured" %>
+        Enterprise login is not configured on this instance.
+      <% else %>
+        An error occurred during sign-in (<code><%= @error %></code>). Please try again or contact an administrator.
+      <% end %>
+    </p>
+
+    <div class="flex gap center margin-block-start">
+      <%= link_to start_auth_oidc_path, class: "btn btn--reversed" do %>
+        <%= image_tag "arrow-right.svg", aria: { hidden: "true" }, size: 20 %>
+        <span>Try again</span>
+      <% end %>
+
+      <%= link_to new_session_path, class: "btn" do %>
+        <%= image_tag "person.svg", aria: { hidden: "true" }, size: 20 %>
+        <span>Sign in with password</span>
+      <% end %>
+    </div>
+  </div>
+
+  <%= render "accounts/help_contact" %>
+</section>
