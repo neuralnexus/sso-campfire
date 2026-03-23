@@ -21,13 +21,17 @@ module Scim
 
         # Reject if a local (non-externally-managed) user already holds this email.
         if (existing = User.find_by(email_address: email))
-          unless existing.externally_managed?
+          if existing.externally_managed?
+            if (ei = ExternalIdentity.find_by(identity_provider: @provider, user: existing))
+              # Idempotent create for this provider.
+              return Scim::UserSerializer.new(user: existing, external_identity: ei, base_url: @base_url).call
+            end
+
+            raise Scim::Errors::Conflict,
+              "User with email #{email} is already managed by a different identity provider."
+          else
             raise Scim::Errors::Conflict,
               "A local user with email #{email} already exists. Admin relink required."
-          end
-          # If already externally managed and linked to this provider, return existing.
-          if (ei = ExternalIdentity.find_by(identity_provider: @provider, user: existing))
-            return Scim::UserSerializer.new(user: existing, external_identity: ei, base_url: @base_url).call
           end
         end
 

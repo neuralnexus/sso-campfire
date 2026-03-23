@@ -19,7 +19,6 @@ class IdentityProvider < ApplicationRecord
   validates :encrypted_client_secret, presence: true
   validates :protocol,                inclusion: { in: PROTOCOLS }
   validate  :https_urls_only
-  validate  :issuer_matches_discovery_metadata, if: :enabled?
 
   scope :enabled, -> { where(enabled: true) }
 
@@ -42,19 +41,4 @@ class IdentityProvider < ApplicationRecord
       end
     end
 
-    # Fetches the discovery document and verifies the issuer claim matches exactly.
-    # Prevents a misconfigured or spoofed discovery_url from silently accepting
-    # tokens from a different issuer.
-    def issuer_matches_discovery_metadata
-      return if discovery_url.blank? || issuer.blank?
-
-      response = Net::HTTP.get_response(URI.parse(discovery_url))
-      metadata = JSON.parse(response.body)
-
-      unless metadata["issuer"] == issuer
-        errors.add(:issuer, "does not match issuer in discovery document (got #{metadata['issuer'].inspect})")
-      end
-    rescue => e
-      errors.add(:discovery_url, "could not be fetched: #{e.message}")
-    end
 end

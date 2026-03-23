@@ -40,3 +40,7 @@ Lockbox.master_key = ENV.fetch("LOCKBOX_MASTER_KEY") {
     Digest::SHA256.hexdigest("lockbox-dev-#{Rails.application.secret_key_base}")
   end
 }
+
+if Rails.env.production? && Rails.application.credentials.dig(:scim_hmac_key).blank?
+  raise "credentials[:scim_hmac_key] must be set in production"
+end

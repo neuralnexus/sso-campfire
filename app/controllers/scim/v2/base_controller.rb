@@ -33,8 +33,14 @@ class Scim::V2::BaseController < ActionController::API
     end
 
     def scim_payload
-      # Permit all — SCIM payloads are schema-validated in services, not Rails params.
-      params.permit!.to_h.with_indifferent_access
+      # Permit known SCIM top-level keys only. Deeper schema validation is handled
+      # inside service objects.
+      allowed_keys = %w[
+        schemas id externalId userName displayName active name emails
+        Operations members meta
+      ]
+
+      request.request_parameters.slice(*allowed_keys).with_indifferent_access
     end
 
     def base_url

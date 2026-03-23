@@ -1,6 +1,8 @@
 module Scim
   module Users
     class Index
+      SUPPORTED_FILTER = /\A\s*(userName|externalId)\s+eq\s+"((?:[^"\\]|\\.)*)"(?:\s+and\s+(userName|externalId)\s+eq\s+"((?:[^"\\]|\\.)*)")?\s*\z/i
+
       def initialize(provider:, params:, base_url:)
         @provider = provider
         @params   = params
@@ -42,16 +44,35 @@ module Scim
           filter = @params[:filter].to_s.strip
           return scope if filter.blank?
 
-          if (m = filter.match(/\buserName\s+eq\s+"([^"]+)"/i))
-            email = m[1]
-            scope = scope.joins(:user).where(users: { email_address: email })
-          end
-
-          if (m = filter.match(/\bexternalId\s+eq\s+"([^"]+)"/i))
-            scope = scope.where(scim_external_id: m[1])
+          parsed = parse_filter!(filter)
+          parsed.each do |attribute, value|
+            case attribute
+            when "userName"
+              scope = scope.joins(:user).where(users: { email_address: value.downcase })
+            when "externalId"
+              scope = scope.where(scim_external_id: value)
+            end
           end
 
           scope
+        end
+
+        def parse_filter!(filter)
+          match = filter.match(SUPPORTED_FILTER)
+          unless match
+            raise Scim::Errors::InvalidValue,
+              "Unsupported filter. Supported forms: userName eq \"...\" and externalId eq \"...\""
+          end
+
+          pairs = [ [ match[1], unescape_filter_value(match[2]) ] ]
+          pairs << [ match[3], unescape_filter_value(match[4]) ] if match[3].present?
+          pairs.uniq { |attribute, _value| attribute.downcase }
+        end
+
+        def unescape_filter_value(raw)
+          JSON.parse("\"#{raw}\"")
+        rescue JSON::ParserError
+          raise Scim::Errors::InvalidValue, "Invalid escape sequence in SCIM filter"
         end
     end
   end

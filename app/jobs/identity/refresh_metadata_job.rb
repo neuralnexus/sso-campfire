@@ -15,7 +15,15 @@ module Identity
     queue_as :low
 
     # Retry with exponential backoff on transient network errors.
-    retry_on StandardError, wait: :polynomially_longer, attempts: 3
+    retry_on Timeout::Error,
+      Net::OpenTimeout,
+      Net::ReadTimeout,
+      Errno::ECONNRESET,
+      Errno::ECONNREFUSED,
+      EOFError,
+      SocketError,
+      wait: :polynomially_longer,
+      attempts: 3
 
     def perform(provider_id = nil)
       providers = if provider_id
@@ -63,6 +71,15 @@ module Identity
         Rails.logger.info("[Identity::RefreshMetadataJob] #{provider.name}: refreshed OK")
       rescue JSON::ParserError => e
         Rails.logger.error("[Identity::RefreshMetadataJob] #{provider.name}: invalid JSON — #{e.message}")
+      rescue Timeout::Error,
+             Net::OpenTimeout,
+             Net::ReadTimeout,
+             Errno::ECONNRESET,
+             Errno::ECONNREFUSED,
+             EOFError,
+             SocketError => e
+        Rails.logger.warn("[Identity::RefreshMetadataJob] #{provider.name}: transient network error — #{e.message}")
+        raise
       rescue => e
         Rails.logger.error("[Identity::RefreshMetadataJob] #{provider.name}: #{e.class} — #{e.message}")
       end

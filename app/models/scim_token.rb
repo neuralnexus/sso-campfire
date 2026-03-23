@@ -31,8 +31,15 @@ class ScimToken < ApplicationRecord
   end
 
   def self.fingerprint(raw)
-    key = Rails.application.credentials.dig(:scim_hmac_key) ||
-          Rails.application.secret_key_base
+    key = Rails.application.credentials.dig(:scim_hmac_key)
+    if key.blank?
+      if Rails.env.production?
+        raise "credentials[:scim_hmac_key] must be set in production"
+      else
+        key = Rails.application.secret_key_base
+      end
+    end
+
     OpenSSL::HMAC.hexdigest("SHA256", key, raw)
   end
 

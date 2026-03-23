@@ -78,7 +78,7 @@ module Identity
       end
 
       def exchange_code!
-        token_endpoint = @provider.token_endpoint || fetch_token_endpoint
+        token_endpoint = cached_endpoint!(:token_endpoint)
 
         body = {
           grant_type:   "authorization_code",
@@ -112,7 +112,7 @@ module Identity
 
       def verify_id_token!(raw_token)
         # Fetch JWKS from provider and decode with signature verification.
-        jwks_uri  = @provider.jwks_uri || fetch_jwks_uri
+        jwks_uri  = cached_endpoint!(:jwks_uri)
         jwks_body = Net::HTTP.get(URI.parse(jwks_uri))
         jwks      = JWT::JWK::Set.new(JSON.parse(jwks_body))
 
@@ -190,19 +190,12 @@ module Identity
         )
       end
 
-      def fetch_token_endpoint
-        fetch_discovery_field("token_endpoint")
-      end
+      def cached_endpoint!(field)
+        value = @provider.public_send(field)
+        return value if value.present?
 
-      def fetch_jwks_uri
-        fetch_discovery_field("jwks_uri")
-      end
-
-      def fetch_discovery_field(field)
-        response = Net::HTTP.get_response(URI.parse(@provider.discovery_url))
-        JSON.parse(response.body).fetch(field)
-      rescue => e
-        raise Errors::DiscoveryFailed, "Could not fetch #{field}: #{e.message}"
+        raise Errors::DiscoveryFailed,
+          "Provider metadata missing #{field}. Refresh discovery metadata in admin settings."
       end
   end
 end
