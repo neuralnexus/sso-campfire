@@ -4,7 +4,7 @@
 class Scim::V2::ServiceProviderConfigController < Scim::V2::BaseController
   def show
     render json: {
-      schemas: ["urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"],
+      schemas: [ "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig" ],
       documentationUri: nil,
       patch: { supported: true },
       bulk:  { supported: false, maxOperations: 0, maxPayloadSize: 0 },

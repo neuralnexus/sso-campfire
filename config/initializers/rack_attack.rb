@@ -31,7 +31,7 @@ class Rack::Attack
         429,
         { "Content-Type" => "application/scim+json" },
         [ {
-          schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
+          schemas: [ "urn:ietf:params:scim:api:messages:2.0:Error" ],
           detail:  "Too many requests",
           status:  "429"
         }.to_json ]

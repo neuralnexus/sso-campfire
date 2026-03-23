@@ -81,7 +81,7 @@ jobs:
 
       - name: Run ZAP baseline scan (DAST)
         run: |
-          docker run --rm --network host \
+          docker run --rm --network host --user root \
             -v "$PWD:/zap/wrk:rw" \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \

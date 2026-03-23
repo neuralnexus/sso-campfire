@@ -1,7 +1,7 @@
 class Scim::V2::SchemasController < Scim::V2::BaseController
   def index
     render json: {
-      schemas:      ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+      schemas:      [ "urn:ietf:params:scim:api:messages:2.0:ListResponse" ],
       totalResults: 1,
       Resources: [
         {

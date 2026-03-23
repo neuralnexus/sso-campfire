@@ -7,7 +7,7 @@ class CreateScimTokens < ActiveRecord::Migration[8.2]
       t.boolean :active,               null: false, default: true
       t.datetime :last_used_at
       t.datetime :expires_at
-      t.text    :scopes  # JSON array, serialized in model; default ["scim:read","scim:write"]
+      t.text :scopes  # JSON array, serialized in model; default ["scim:read","scim:write"]
       t.timestamps
     end
 

@@ -49,5 +49,4 @@ class IdentityProvider < ApplicationRecord
         errors.add(:base, "#{url} is not a valid URL")
       end
     end
-
 end

@@ -12,7 +12,7 @@ module Scim
 
     def call
       {
-        schemas:    [SCHEMA],
+        schemas:    [ SCHEMA ],
         id:         @external_identity.scim_resource_id,
         externalId: @external_identity.scim_external_id,
         userName:   @user.email_address,
