@@ -9,6 +9,22 @@ require "turbo/broadcastable/test_helper"
 
 WebMock.enable!
 
+encryption = Rails.application.config.active_record.encryption
+if encryption.primary_key.blank? || encryption.deterministic_key.blank? || encryption.key_derivation_salt.blank?
+  base = Rails.application.secret_key_base
+  primary = Digest::SHA256.hexdigest("test-arenc-primary-#{base}")
+  deterministic = Digest::SHA256.hexdigest("test-arenc-deterministic-#{base}")
+  salt = Digest::SHA256.hexdigest("test-arenc-salt-#{base}")
+
+  encryption.primary_key = [primary]
+  encryption.deterministic_key = [deterministic]
+  encryption.key_derivation_salt = salt
+
+  ActiveRecord::Encryption.config.primary_key = [primary]
+  ActiveRecord::Encryption.config.deterministic_key = [deterministic]
+  ActiveRecord::Encryption.config.key_derivation_salt = salt
+end
+
 class ActiveSupport::TestCase
   include ActiveJob::TestHelper
 

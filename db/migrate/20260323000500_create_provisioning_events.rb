@@ -17,8 +17,14 @@ class CreateProvisioningEvents < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :provisioning_events, [ :identity_provider_id, :created_at ]
-    add_index :provisioning_events, :request_id
-    add_index :provisioning_events, [ :user_id, :created_at ]
+    add_index :provisioning_events,
+      [ :identity_provider_id, :created_at ],
+      name: "idx_provisioning_events_on_provider_and_created"
+    add_index :provisioning_events,
+      :request_id,
+      name: "idx_provisioning_events_on_request_id"
+    add_index :provisioning_events,
+      [ :user_id, :created_at ],
+      name: "idx_provisioning_events_on_user_and_created"
   end
 end

@@ -68,7 +68,7 @@ module Identity
       def fetch_authorization_endpoint
         response = Net::HTTP.get_response(URI.parse(@provider.discovery_url))
         JSON.parse(response.body).fetch("authorization_endpoint")
-      rescue => e
+      rescue StandardError => e
         raise Errors::DiscoveryFailed, "Could not fetch authorization_endpoint: #{e.message}"
       end
   end
