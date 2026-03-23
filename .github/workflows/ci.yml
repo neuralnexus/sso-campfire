@@ -1,5 +1,7 @@
 name: CI
 
+# Includes workflow_dispatch to allow manual post-merge verification.
+
 on:
   push:
     branches: [ main, master ]
