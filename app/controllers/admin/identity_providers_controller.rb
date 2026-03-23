@@ -27,7 +27,7 @@ class Admin::IdentityProvidersController < Admin::BaseController
 
   def update
     attrs = provider_params
-    attrs.delete(:encrypted_client_secret) if attrs[:encrypted_client_secret].blank?
+    attrs.delete(:client_secret) if attrs[:client_secret].blank?
 
     if @provider.update(attrs)
       redirect_to admin_identity_provider_path(@provider), notice: "Identity provider updated."
@@ -92,7 +92,7 @@ class Admin::IdentityProvidersController < Admin::BaseController
     def provider_params
       params.require(:identity_provider).permit(
         :name, :protocol, :issuer, :discovery_url, :client_id,
-        :encrypted_client_secret, :scopes,
+        :client_secret, :scopes,
         :claim_sub, :claim_email, :claim_email_verified, :claim_name, :claim_groups,
         :jit_provisioning, :scim_enabled, :require_pkce, :require_email_verified,
         :allow_email_linking, :soft_delete_on_scim_deactivate, :clock_skew_seconds

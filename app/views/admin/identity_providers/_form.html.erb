@@ -44,7 +44,7 @@
 
     <label class="flex align-center gap">
       <span class="txt-small" style="min-width: 10em">Client Secret</span>
-      <%= form.password_field :encrypted_client_secret, class: "input flex-item-grow",
+      <%= form.password_field :client_secret, class: "input flex-item-grow",
             autocomplete: "new-password",
             placeholder: provider.persisted? ? "(unchanged)" : "Paste client secret" %>
     </label>

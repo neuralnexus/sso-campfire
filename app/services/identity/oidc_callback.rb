@@ -90,7 +90,7 @@ module Identity
           code:         @params[:code],
           redirect_uri: redirect_uri,
           client_id:    @provider.client_id,
-          client_secret: @provider.encrypted_client_secret
+          client_secret: @provider.client_secret
         }
 
         if @provider.require_pkce?

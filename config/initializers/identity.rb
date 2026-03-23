@@ -29,7 +29,7 @@ Rails.application.configure do
   config.x.identity.mode = mode
 end
 
-# Lockbox encryption key for IdentityProvider.encrypted_client_secret.
+# Lockbox encryption key for IdentityProvider.client_secret.
 # Falls back to secret_key_base in development; must be set explicitly in production.
 Lockbox.master_key = ENV.fetch("LOCKBOX_MASTER_KEY") {
   if Rails.env.production?

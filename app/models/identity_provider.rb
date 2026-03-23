@@ -30,6 +30,15 @@ class IdentityProvider < ApplicationRecord
     scopes.split
   end
 
+  def client_secret
+    encrypted_client_secret
+  end
+
+  def client_secret=(value)
+    self.encrypted_client_secret = value
+    self.encrypted_client_secret_iv = SecureRandom.hex(12) if value.present?
+  end
+
   private
 
     def https_urls_only
