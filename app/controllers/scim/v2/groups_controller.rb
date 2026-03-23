@@ -18,7 +18,7 @@ class Scim::V2::GroupsController < Scim::V2::BaseController
     resources = mappings.map { |m| serialize_group(m) }
 
     render json: {
-      schemas:      ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+      schemas:      [ "urn:ietf:params:scim:api:messages:2.0:ListResponse" ],
       totalResults: resources.size,
       startIndex:   1,
       itemsPerPage: resources.size,
@@ -107,7 +107,7 @@ class Scim::V2::GroupsController < Scim::V2::BaseController
 
     def serialize_group(mapping)
       {
-        schemas:     [GROUP_SCHEMA],
+        schemas:     [ GROUP_SCHEMA ],
         id:          mapping.external_group_id,
         displayName: mapping.external_group_name,
         meta: {

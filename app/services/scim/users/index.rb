@@ -17,8 +17,8 @@ module Scim
 
         identities = apply_filter(identities)
 
-        start_index = [(@params[:startIndex] || 1).to_i, 1].max
-        count       = [(@params[:count] || 100).to_i, 200].min
+        start_index = [ (@params[:startIndex] || 1).to_i, 1 ].max
+        count       = [ (@params[:count] || 100).to_i, 200 ].min
         offset      = start_index - 1
 
         total      = identities.count
@@ -29,7 +29,7 @@ module Scim
         end
 
         {
-          schemas:      ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+          schemas:      [ "urn:ietf:params:scim:api:messages:2.0:ListResponse" ],
           totalResults: total,
           startIndex:   start_index,
           itemsPerPage: count,

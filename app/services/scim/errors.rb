@@ -11,7 +11,7 @@ module Scim
 
       def to_scim_response
         {
-          schemas:  ["urn:ietf:params:scim:api:messages:2.0:Error"],
+          schemas:  [ "urn:ietf:params:scim:api:messages:2.0:Error" ],
           detail:   message,
           scimType: scim_type,
           status:   status.to_s

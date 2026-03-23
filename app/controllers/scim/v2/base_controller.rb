@@ -21,7 +21,7 @@ class Scim::V2::BaseController < ActionController::API
       acceptable = %w[application/scim+json application/json]
       unless acceptable.any? { |ct| request.content_type&.start_with?(ct) }
         render json: {
-          schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
+          schemas: [ "urn:ietf:params:scim:api:messages:2.0:Error" ],
           detail:  "Content-Type must be application/scim+json or application/json",
           status:  "415"
         }, status: :unsupported_media_type
@@ -53,7 +53,7 @@ class Scim::V2::BaseController < ActionController::API
 
     def render_bad_request(error)
       render json: {
-        schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
+        schemas: [ "urn:ietf:params:scim:api:messages:2.0:Error" ],
         detail:  error.message,
         status:  "400"
       }, status: :bad_request

@@ -16,12 +16,12 @@ if encryption.primary_key.blank? || encryption.deterministic_key.blank? || encry
   deterministic = Digest::SHA256.hexdigest("test-arenc-deterministic-#{base}")
   salt = Digest::SHA256.hexdigest("test-arenc-salt-#{base}")
 
-  encryption.primary_key = [primary]
-  encryption.deterministic_key = [deterministic]
+  encryption.primary_key = [ primary ]
+  encryption.deterministic_key = [ deterministic ]
   encryption.key_derivation_salt = salt
 
-  ActiveRecord::Encryption.config.primary_key = [primary]
-  ActiveRecord::Encryption.config.deterministic_key = [deterministic]
+  ActiveRecord::Encryption.config.primary_key = [ primary ]
+  ActiveRecord::Encryption.config.deterministic_key = [ deterministic ]
   ActiveRecord::Encryption.config.key_derivation_salt = salt
 end
 

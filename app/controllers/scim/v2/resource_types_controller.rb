@@ -1,11 +1,11 @@
 class Scim::V2::ResourceTypesController < Scim::V2::BaseController
   def index
     render json: {
-      schemas:      ["urn:ietf:params:scim:api:messages:2.0:ListResponse"],
+      schemas:      [ "urn:ietf:params:scim:api:messages:2.0:ListResponse" ],
       totalResults: 2,
       Resources: [
         {
-          schemas:      ["urn:ietf:params:scim:schemas:core:2.0:ResourceType"],
+          schemas:      [ "urn:ietf:params:scim:schemas:core:2.0:ResourceType" ],
           id:           "User",
           name:         "User",
           endpoint:     "/Users",
@@ -13,7 +13,7 @@ class Scim::V2::ResourceTypesController < Scim::V2::BaseController
           meta: { resourceType: "ResourceType", location: "#{base_url}/scim/v2/ResourceTypes/User" }
         },
         {
-          schemas:      ["urn:ietf:params:scim:schemas:core:2.0:ResourceType"],
+          schemas:      [ "urn:ietf:params:scim:schemas:core:2.0:ResourceType" ],
           id:           "Group",
           name:         "Group",
           endpoint:     "/Groups",
