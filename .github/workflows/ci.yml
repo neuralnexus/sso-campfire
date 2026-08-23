@@ -10,7 +10,7 @@ permissions: {}
 
 jobs:
   scan:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(((github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && vars.NEXUS_RUNS_ON_LINUX) || '["ubuntu-26.04"]') }}
     permissions:
       contents: read
 
@@ -35,7 +35,7 @@ jobs:
         run: bin/bundler-audit check --update
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(((github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && vars.NEXUS_RUNS_ON_LINUX) || '["ubuntu-26.04"]') }}
     permissions:
       contents: read
     steps:
@@ -70,7 +70,7 @@ jobs:
 
   lint-actions:
     name: GitHub Actions audit
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(((github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && vars.NEXUS_RUNS_ON_LINUX) || '["ubuntu-26.04"]') }}
     permissions:
       contents: read
 
@@ -88,7 +88,7 @@ jobs:
           advanced-security: false
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(((github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && vars.NEXUS_RUNS_ON_LINUX) || '["ubuntu-26.04"]') }}
     permissions:
       contents: read
     env:
@@ -133,7 +133,7 @@ jobs:
 
   test_system:
     name: System (${{ matrix.browser }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(((github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && vars.NEXUS_RUNS_ON_LINUX) || '["ubuntu-26.04"]') }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -214,7 +214,7 @@ jobs:
 
   test_system_mobile:
     name: System (Chrome mobile emulation)
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(((github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && vars.NEXUS_RUNS_ON_LINUX) || '["ubuntu-26.04"]') }}
     timeout-minutes: 25
     permissions:
       contents: read
@@ -263,7 +263,7 @@ jobs:
 
   test_system_safari:
     name: System (Safari contracts)
-    runs-on: macos-15
+    runs-on: ${{ fromJSON(((github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && vars.NEXUS_RUNS_ON_MACOS_15_ARM64) || '["macos-15"]') }}
     timeout-minutes: 25
     permissions:
       contents: read
